@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator</title>
+  <style>
+    :root {
+      --bg: #1e1f29;
+      --panel: #282a3a;
+      --display-bg: #171821;
+      --btn-bg: #33354a;
+      --btn-digits: #3a3d54;
+      --btn-hover: #444863;
+      --btn-active: #54597c;
+      --accent: #ff9f43;
+      --accent-hover: #ffb366;
+      --accent-active: #e08732;
+      --equal: #2ecc71;
+      --equal-hover: #3fe086;
+      --clear: #e74c3c;
+      --clear-hover: #ff5a4d;
+      --text: #f4f5fa;
+      --text-dim: #9aa0b5;
+      --error: #ff6b6b;
+      --radius: 12px;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #12131b 0%, #1e2030 100%);
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+    }
+
+    .calculator {
+      width: 300px;
+      padding: 20px;
+      background: var(--panel);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .calculator__display {
+      background: var(--display-bg);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      min-height: 96px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      word-break: break-all;
+      text-align: right;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .calculator__expression {
+      font-size: 16px;
+      color: var(--text-dim);
+      min-height: 20px;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    .calculator__result {
+      display: none;
+      font-size: 28px;
+      font-weight: 600;
+      margin-top: 6px;
+      max-width: 100%;
+      overflow-wrap: break-word;
+    }
+
+    .calculator__result--visible {
+      display: block;
+    }
+
+    .calculator__result--success {
+      color: var(--equal);
+    }
+
+    .calculator__result--error {
+      color: var(--error);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .calculator__keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .calculator__key {
+      height: 56px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--btn-bg);
+      cursor: pointer;
+      transition: background-color 0.12s ease, transform 0.05s ease;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .calculator__key:hover {
+      background: var(--btn-hover);
+    }
+
+    .calculator__key:active,
+    .calculator__key--pressed {
+      transform: scale(0.96);
+    }
+
+    .calculator__key:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .calculator__key--digit {
+      background: var(--btn-digits);
+    }
+
+    .calculator__key--digit:hover {
+      background: var(--btn-hover);
+    }
+
+    .calculator__key--operator {
+      background: var(--accent);
+      color: #20130a;
+    }
+
+    .calculator__key--operator:hover {
+      background: var(--accent-hover);
+    }
+
+    .calculator__key--operator:active,
+    .calculator__key--operator.calculator__key--pressed {
+      background: var(--accent-active);
+    }
+
+    .calculator__key--clear {
+      background: var(--clear);
+      color: #ffffff;
+    }
+
+    .calculator__key--clear:hover {
+      background: var(--clear-hover);
+    }
+
+    .calculator__key--equals {
+      background: var(--equal);
+      color: #08331c;
+    }
+
+    .calculator__key--equals:hover {
+      background: var(--equal-hover);
+    }
+
+    .calculator__key--span-2 {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" aria-label="Calculator">
+    <div class="calculator__display" aria-live="polite">
+      <div class="calculator__expression" id="expression" aria-label="Current expression">0</div>
+      <div class="calculator__result" id="result" role="status"></div>
+    </div>
+    <div class="calculator__keys" id="keys">
+      <button type="button" class="calculator__key calculator__key--clear calculator__key--span-2" data-action="clear">C</button>
+      <button type="button" class="calculator__key calculator__key--operator" data-op="/">&divide;</button>
+      <button type="button" class="calculator__key calculator__key--operator" data-op="*">&times;</button>
+
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="7">7</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="8">8</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="9">9</button>
+      <button type="button" class="calculator__key calculator__key--operator" data-op="-">&minus;</button>
+
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="4">4</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="5">5</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="6">6</button>
+      <button type="button" class="calculator__key calculator__key--operator" data-op="+">+</button>
+
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="1">1</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="2">2</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="3">3</button>
+      <button type="button" class="calculator__key calculator__key--equals" data-action="equals">=</button>
+
+      <button type="button" class="calculator__key calculator__key--digit" data-digit="0">0</button>
+      <button type="button" class="calculator__key calculator__key--digit" data-digit=".">.</button>
+      <button type="button" class="calculator__key" data-action="backspace" aria-label="Backspace">&larr;</button>
+      <button type="button" class="calculator__key" data-action="space">&nbsp;</button>
+    </div>
+    <noscript>
+      <p style="color: var(--text); text-align: center; margin-top: 12px;">
+        This calculator requires JavaScript to run.
+      </p>
+    </noscript>
+  </main>
+
+  <script>
+    (function () {
+      const expressionEl = document.getElementById("expression");
+      const resultEl = document.getElementById("result");
+      const keysEl = document.getElementById("keys");
+
+      let expression = "0";
+      let computing = false;
+
+      const API_ENDPOINT = "/calculate";
+
+      function render() {
+        const current = expression || "0";
+        expressionEl.textContent = current;
+        expressionEl.setAttribute("aria-label", "Current expression " + current);
+      }
+
+      function showResult(text, isError) {
+        resultEl.textContent = text;
+        resultEl.classList.add("calculator__result--visible");
+        resultEl.classList.toggle("calculator__result--error", !!isError);
+        resultEl.classList.toggle("calculator__result--success", !isError);
+      }
+
+      function hideResult() {
+        resultEl.classList.remove("calculator__result--visible");
+        resultEl.textContent = "";
+      }
+
+      function lastTokenIsNumber(expr) {
+        return /[\d.]$/.test(expr.replace(/\s+/g, ""));
+      }
+
+      function appendToken(token) {
+        if (computing) {
+          if (/^[+\-*/]$/.test(token)) {
+            expression = resultEl.textContent;
+            computing = false;
+          } else {
+            expression = "";
+            computing = false;
+          }
+        }
+        hideResult();
+        if (expression === "" || expression === "0") {
+          if (token === ".") {
+            expression = "0.";
+          } else if (/^\d$/.test(token)) {
+            expression = token;
+          } else {
+            expression = token;
+          }
+        } else {
+          expression += token;
+        }
+        render();
+      }
+
+      function clearAll() {
+        expression = "0";
+        computing = false;
+        hideResult();
+        render();
+      }
+
+      function backspace() {
+        if (computing || expression === "" || expression === "0") {
+          clearAll();
+          return;
+        }
+        hideResult();
+        expression = expression.slice(0, -1);
+        if (expression === "") {
+          expression = "0";
+        }
+        render();
+      }
+
+      function handleOperator(op) {
+        appendToken(" " + op + " ");
+      }
+
+      async function evaluate() {
+        const expr = expression.trim();
+        if (!expr) {
+          return;
+        }
+        computing = true;
+        showResult("...", false);
+        try {
+          const response = await fetch(API_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ expression: expr })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            const message =
+              (data && data.error) ||
+              ("Request failed with status " + response.status);
+            showResult(String(message), true);
+            computing = false;
+            return;
+          }
+          const result =
+            data && typeof data.result !== "undefined" ? data.result : data;
+          showResult(String(result), false);
+          computing = true;
+        } catch (err) {
+          showResult("Network error: unable to reach the calculator service", true);
+          computing = false;
+        }
+      }
+
+      function onKeyPress(key) {
+        if (key.classList.contains("calculator__key--pressed")) {
+          return;
+        }
+        key.classList.add("calculator__key--pressed");
+        const action = key.getAttribute("data-action");
+        if (action === "clear") {
+          clearAll();
+        } else if (action === "backspace") {
+          backspace();
+        } else if (action === "equals") {
+          evaluate();
+        } else if (key.hasAttribute("data-op")) {
+          handleOperator(key.getAttribute("data-op"));
+        } else if (key.hasAttribute("data-digit")) {
+          appendToken(key.getAttribute("data-digit"));
+        }
+        setTimeout(function () {
+          key.classList.remove("calculator__key--pressed");
+        }, 120);
+      }
+
+      keysEl.addEventListener("click", function (event) {
+        const key = event.target.closest("button");
+        if (!key) {
+          return;
+        }
+        onKeyPress(key);
+      });
+
+      keysEl.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+        if (event.target.closest("button")) {
+          event.preventDefault();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        const key = event.key;
+        if (/^[0-9.]$/.test(key)) {
+          event.preventDefault();
+          onKeyPress(document.getElementById("keys").querySelector('[data-digit="' + key + '"]'));
+          return;
+        }
+        const opMap = { "+": "+", "-": "-", "*": "*", "/": "/", "x": "*", "X": "*", "÷": "/" };
+        if (key in opMap) {
+          event.preventDefault();
+          handleOperator(opMap[key]);
+          return;
+        }
+        if (key === "Enter" || key === "=") {
+          event.preventDefault();
+          evaluate();
+          return;
+        }
+        if (key === "Escape" || key === "c" || key === "C") {
+          event.preventDefault();
+          clearAll();
+          return;
+        }
+        if (key === "Backspace") {
+          event.preventDefault();
+          backspace();
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
