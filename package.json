@@ -1,0 +1,25 @@
+{
+  "name": "app-config",
+  "version": "1.0.0",
+  "description": "Centralized configuration and feature flag management module",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "dist/config/index.js",
+  "types": "dist/config/index.d.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}
