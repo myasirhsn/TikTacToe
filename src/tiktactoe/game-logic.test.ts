@@ -108,7 +108,11 @@ function applyUndo(state: GameState): GameState {
 describe('tiktactoe win detection', () => {
   it('detects the three rows', () => {
     for (const player of ['X', 'O'] as const) {
-      for (const row of [[0, 1, 2], [3, 4, 5], [6, 7, 8]] as const) {
+      for (const row of [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+      ] as const) {
         const cells = new Array<Player | null>(9).fill(null);
         for (const idx of row) {
           cells[idx] = player;
@@ -120,7 +124,11 @@ describe('tiktactoe win detection', () => {
 
   it('detects the three columns', () => {
     for (const player of ['X', 'O'] as const) {
-      for (const col of [[0, 3, 6], [1, 4, 7], [2, 5, 8]] as const) {
+      for (const col of [
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+      ] as const) {
         const cells = new Array<Player | null>(9).fill(null);
         for (const idx of col) {
           cells[idx] = player;
