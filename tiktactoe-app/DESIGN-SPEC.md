@@ -29,19 +29,19 @@ Game: 3x3 Tic-Tac-Toe, Two-player (pass-and-play) vs AI modes. Matches `calculat
 
 ## 2. Design tokens (dark / light)
 
-| Token | Dark (default) | Light |
-|---|---|---|
-| bg (gradient base) | `#1e1f29` / `#171821` | `#f2f4fa` |
-| panel | `#282a3a` | `#ffffff` |
-| surface (cells) | `#33354a` | `#e8eaf3` |
-| surface hover | `#444863` | `#dfe2ee` |
-| text | `#f4f5fa` | `#1e1f29` |
-| text dim | `#9aa0b5` | `#5c6178` |
-| X accent | `#ff9f43` | `#e07b1f` |
-| O accent | `#4fc3f7` | `#0e7fc4` |
-| success / win glow | `#2ecc71` | `#1f9d58` |
-| error | `#ff6b6b` | `#d43535` |
-| border | rgba(255,255,255,0.06) | `#d4d6e3` |
+| Token              | Dark (default)         | Light     |
+| ------------------ | ---------------------- | --------- |
+| bg (gradient base) | `#1e1f29` / `#171821`  | `#f2f4fa` |
+| panel              | `#282a3a`              | `#ffffff` |
+| surface (cells)    | `#33354a`              | `#e8eaf3` |
+| surface hover      | `#444863`              | `#dfe2ee` |
+| text               | `#f4f5fa`              | `#1e1f29` |
+| text dim           | `#9aa0b5`              | `#5c6178` |
+| X accent           | `#ff9f43`              | `#e07b1f` |
+| O accent           | `#4fc3f7`              | `#0e7fc4` |
+| success / win glow | `#2ecc71`              | `#1f9d58` |
+| error              | `#ff6b6b`              | `#d43535` |
+| border             | rgba(255,255,255,0.06) | `#d4d6e3` |
 
 - X = warm orange, O = cool blue (distinct + blue/orange safe for red-green CVD; shapes reinforce).
 - Typography: system stack (`Segoe UI, system-ui, Roboto`), board marks 44px weight 600; radius 12px; shadow `0 18px 40px rgba(0,0,0,0.45)` dark, `0 12px 28px rgba(30,31,41,0.12)` light.
@@ -55,14 +55,14 @@ Game: 3x3 Tic-Tac-Toe, Two-player (pass-and-play) vs AI modes. Matches `calculat
 
 ## 4. States & transitions
 
-| State | Trigger | UI behavior |
-|---|---|---|
-| Initial | page load | Empty board, "X's turn", default mode Two-player |
-| Loading | (n/a locally; AI thinking) | Status → "AI thinking…" + subtle `pulse` on board, cells disabled |
-| Playing | each move | Mark pop-in `transform: scale(0.6 → 1)` with `opacity`, 150ms ease-out; status flips turn |
-| Winner | 3-in-a-row | Win-line glow animation, status "X wins!", banner accent-colored, board locked |
-| Draw | board full, no line | Status "It's a draw", board locked |
-| Reset | Restart click | Cells clear with fade-out (`opacity 120ms`), then pop-in sequence row-by-row |
+| State   | Trigger                    | UI behavior                                                                               |
+| ------- | -------------------------- | ----------------------------------------------------------------------------------------- |
+| Initial | page load                  | Empty board, "X's turn", default mode Two-player                                          |
+| Loading | (n/a locally; AI thinking) | Status → "AI thinking…" + subtle `pulse` on board, cells disabled                         |
+| Playing | each move                  | Mark pop-in `transform: scale(0.6 → 1)` with `opacity`, 150ms ease-out; status flips turn |
+| Winner  | 3-in-a-row                 | Win-line glow animation, status "X wins!", banner accent-colored, board locked            |
+| Draw    | board full, no line        | Status "It's a draw", board locked                                                        |
+| Reset   | Restart click              | Cells clear with fade-out (`opacity 120ms`), then pop-in sequence row-by-row              |
 
 - Recommended: `transition: background-color 0.12s ease, transform 0.05s ease` on cells/buttons (inherit calculator-app); `@keyframes scale-in`, `@keyframes pulse`, `@keyframes glow`.
 - `prefers-reduced-motion: reduce` → disable animations, keep instant state swaps.
