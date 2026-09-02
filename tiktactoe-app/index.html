@@ -322,7 +322,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .panel-button:active {
+    .panel-button:active:not(:disabled) {
       transform: scale(0.97);
     }
 
@@ -348,6 +348,31 @@
 
     .panel-button--ghost:hover {
       color: var(--text);
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .panel-actions .panel-button {
+      flex: 1;
+    }
+
+    .panel-button--secondary {
+      background: var(--surface-hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .panel-button--secondary:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--surface-hover) 75%, var(--text-dim));
+    }
+
+    .panel-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .score {
@@ -413,6 +438,44 @@
       }
     }
 
+    /* ---------- Win confetti ---------- */
+    .confetti {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .confetti__piece {
+      position: absolute;
+      top: -24px;
+      width: 8px;
+      height: 14px;
+      border-radius: 2px;
+      opacity: 0;
+      transform: translate3d(0, 0, 0) rotate(0deg);
+      animation: confetti-fall var(--confetti-duration, 2s) ease-in
+        var(--confetti-delay, 0s) forwards;
+    }
+
+    .confetti__piece--wide {
+      width: 5px;
+      height: 10px;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotate(0deg);
+      }
+      100% {
+        opacity: 0.85;
+        transform: translate3d(var(--confetti-drift, 0px), 110vh, 0)
+          rotate(var(--confetti-rotation, 720deg));
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -443,7 +506,14 @@
           <button type="button" class="mode-select__option" data-mode="ai">vs AI</button>
         </div>
 
-        <button type="button" class="panel-button panel-button--primary" id="restart" aria-label="Restart round">Restart</button>
+        <div class="panel-actions">
+          <button type="button" class="panel-button panel-button--primary" id="restart" aria-label="Restart round">
+            Restart
+          </button>
+          <button type="button" class="panel-button panel-button--secondary" id="undo" aria-label="Undo last move" disabled>
+            Undo Move
+          </button>
+        </div>
 
         <div class="score" aria-label="Score">
           <div class="score__item score__item--x">
@@ -488,6 +558,7 @@
       var statusEl = document.getElementById("status");
       var themeToggle = document.getElementById("themeToggle");
       var restartBtn = document.getElementById("restart");
+      var undoBtn = document.getElementById("undo");
       var resetScoresBtn = document.getElementById("resetScores");
       var scoreXEl = document.getElementById("scoreX");
       var scoreOEl = document.getElementById("scoreO");
@@ -503,8 +574,11 @@
         finished: false,
         winner: null,
         winningLine: null,
-        aiThinking: false
+        aiThinking: false,
+        history: []
       };
+
+      var aiTimer = null;
 
       var scores = loadScores();
 
@@ -622,12 +696,14 @@
           saveScores();
           highlightWin(result.line, result.winner);
           setStatus(result.winner + " wins!", result.winner.toLowerCase());
+          fireConfetti(result.winner);
         } else {
           scores.draws += 1;
           saveScores();
           setStatus("It\u2019s a draw", "draw");
         }
         renderScores();
+        updateUndoButton();
       }
 
       function handleCellClick(index) {
@@ -639,6 +715,7 @@
 
       function placeMark(index, player) {
         state.cells[index] = player;
+        state.history.push({ index: index, player: player });
         renderCell(index);
 
         var result = findWinner(state.cells);
@@ -652,6 +729,7 @@
         }
 
         state.current = player === "X" ? "O" : "X";
+        updateUndoButton();
         if (state.mode === "ai" && state.current === "O") {
           startAiTurn();
         } else {
@@ -664,7 +742,7 @@
         boardEl.classList.add("board--thinking");
         renderBoard();
         updateTurnStatus();
-        window._aiTimer = window.setTimeout(aiMove, 420);
+        aiTimer = window.setTimeout(aiMove, 420);
       }
 
       /* ---- AI logic: one-ply "don't lose now" + random ---- */
@@ -732,6 +810,104 @@
         return -1;
       }
 
+      /* ---- Win confetti ---- */
+
+      function fireConfetti(winner) {
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          return;
+        }
+        var css = getComputedStyle(document.documentElement);
+        var xColor = css.getPropertyValue("--x-accent").trim();
+        var oColor = css.getPropertyValue("--o-accent").trim();
+        var winColor = css.getPropertyValue("--win").trim();
+        var palette =
+          winner === "O"
+            ? [oColor, winColor, xColor, "#ffffff"]
+            : [xColor, winColor, oColor, "#ffffff"];
+
+        var wrap = document.createElement("div");
+        wrap.className = "confetti";
+        wrap.setAttribute("aria-hidden", "true");
+        wrap.setAttribute("role", "presentation");
+
+        for (var i = 0; i < 90; i++) {
+          var piece = document.createElement("span");
+          piece.className = "confetti__piece";
+          if (Math.random() < 0.5) {
+            piece.classList.add("confetti__piece--wide");
+          }
+          piece.style.left = Math.floor(Math.random() * 100) + "vw";
+          piece.style.backgroundColor =
+            palette[Math.floor(Math.random() * palette.length)];
+          piece.style.setProperty(
+            "--confetti-duration",
+            (1.6 + Math.random() * 1.4).toFixed(2) + "s"
+          );
+          piece.style.setProperty(
+            "--confetti-delay",
+            (Math.random() * 0.4).toFixed(2) + "s"
+          );
+          piece.style.setProperty(
+            "--confetti-drift",
+            Math.floor(Math.random() * 260 - 130) + "px"
+          );
+          piece.style.setProperty(
+            "--confetti-rotation",
+            Math.floor(Math.random() * 720 + 360) + "deg"
+          );
+          wrap.appendChild(piece);
+        }
+
+        document.body.appendChild(wrap);
+        window.setTimeout(function () {
+          if (wrap.parentNode) {
+            wrap.parentNode.removeChild(wrap);
+          }
+        }, 3600);
+      }
+
+      /* ---- Undo ---- */
+
+      function undoMove() {
+        if (state.finished || state.history.length === 0) {
+          return;
+        }
+        if (aiTimer) {
+          window.clearTimeout(aiTimer);
+          aiTimer = null;
+        }
+        state.aiThinking = false;
+        boardEl.classList.remove("board--thinking");
+
+        if (state.mode === "ai") {
+          var last = state.history[state.history.length - 1];
+          if (last && last.player === "O") {
+            state.history.pop();
+            if (state.history.length > 0) {
+              state.history.pop();
+            }
+          } else {
+            state.history.pop();
+          }
+          state.current = "X";
+        } else {
+          state.current = state.history.pop().player;
+        }
+
+        state.cells = new Array(9).fill(null);
+        for (var i = 0; i < state.history.length; i++) {
+          state.cells[state.history[i].index] = state.history[i].player;
+        }
+
+        renderBoard();
+        updateTurnStatus();
+        updateUndoButton();
+      }
+
+      function updateUndoButton() {
+        undoBtn.disabled = state.finished || state.history.length === 0;
+      }
+
       /* ---- Controls ---- */
 
       function setMode(mode) {
@@ -743,9 +919,9 @@
       }
 
       function restartRound() {
-        if (state.aiThinking || window._aiTimer) {
-          window.clearTimeout(window._aiTimer);
-          window._aiTimer = null;
+        if (aiTimer) {
+          window.clearTimeout(aiTimer);
+          aiTimer = null;
         }
         state.cells = new Array(9).fill(null);
         state.current = "X";
@@ -753,6 +929,7 @@
         state.winner = null;
         state.winningLine = null;
         state.aiThinking = false;
+        state.history = [];
 
         boardEl.classList.remove("board--finished", "board--thinking");
 
@@ -767,6 +944,7 @@
         }, 120);
 
         updateTurnStatus();
+        updateUndoButton();
       }
 
       function resetScores() {
@@ -817,6 +995,7 @@
       });
 
       restartBtn.addEventListener("click", restartRound);
+      undoBtn.addEventListener("click", undoMove);
       resetScoresBtn.addEventListener("click", resetScores);
       themeToggle.addEventListener("click", toggleTheme);
 
@@ -831,6 +1010,7 @@
       renderScores();
       renderBoard();
       updateTurnStatus();
+      updateUndoButton();
     })();
   </script>
 </body>
