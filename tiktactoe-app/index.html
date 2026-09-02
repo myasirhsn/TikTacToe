@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        var saved = null;
+        try {
+          saved = window.localStorage.getItem('xtt-theme');
+        } catch (e) {
+          /* storage unavailable */
+        }
+        document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+      })();
+    </script>
     <title>Tic-Tac-Toe</title>
     <style>
       :root {
@@ -107,6 +118,8 @@
         cursor: pointer;
         transition:
           background-color 0.12s ease,
+          border-color 0.25s ease,
+          color 0.25s ease,
           transform 0.05s ease;
         -webkit-tap-highlight-color: transparent;
         user-select: none;
@@ -152,6 +165,7 @@
         text-align: center;
         transition:
           background-color 0.12s ease,
+          border-color 0.25s ease,
           color 0.25s ease;
       }
 
@@ -228,6 +242,7 @@
         user-select: none;
         transition:
           background-color 0.12s ease,
+          border-color 0.25s ease,
           transform 0.05s ease,
           opacity 0.12s ease,
           box-shadow 0.12s ease;
@@ -323,6 +338,10 @@
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
+        transition:
+          background-color 0.25s ease,
+          border-color 0.25s ease,
+          color 0.25s ease;
       }
 
       .mode-select {
@@ -437,6 +456,10 @@
         border-radius: var(--radius);
         background: var(--panel);
         border: 1px solid var(--border);
+        transition:
+          background-color 0.25s ease,
+          border-color 0.25s ease,
+          color 0.25s ease;
       }
 
       .score__label {
@@ -452,6 +475,7 @@
         margin-top: 2px;
         font-size: 20px;
         font-weight: 700;
+        transition: color 0.25s ease;
       }
 
       .score__item--x .score__value {
@@ -523,6 +547,18 @@
           transform: translate3d(var(--confetti-drift, 0px), 110vh, 0)
             rotate(var(--confetti-rotation, 720deg));
         }
+      }
+
+      /* Theme-switch transition boost: raises surface transition durations while a
+         theme toggle is animating so panel, cells, status and scores crossfade
+         smoothly. Removed 260ms after each toggle; reduced-motion users stay on
+         instant swaps via the block below. */
+      .theme-transitioning,
+      .theme-transitioning *,
+      .theme-transitioning *::before,
+      .theme-transitioning *::after {
+        transition-duration: 0.25s;
+        transition-timing-function: ease;
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -661,6 +697,7 @@
         };
 
         var aiTimer = null;
+        var themeTransitionTimer = null;
 
         var scores = loadScores();
 
@@ -1047,6 +1084,7 @@
             'aria-label',
             theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
           );
+          themeToggle.textContent = theme === 'dark' ? '\u2600\uFE0F' : '\u{1F319}';
           try {
             localStorage.setItem(THEME_KEY, theme);
           } catch (e) {
@@ -1058,6 +1096,14 @@
           var next =
             document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
           applyTheme(next);
+          var root = document.documentElement;
+          root.classList.add('theme-transitioning');
+          if (themeTransitionTimer) {
+            window.clearTimeout(themeTransitionTimer);
+          }
+          themeTransitionTimer = window.setTimeout(function () {
+            root.classList.remove('theme-transitioning');
+          }, 260);
         }
 
         /* ---- Wire-up ---- */
